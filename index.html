@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博弈论AI - Game Theory AI</title>
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* 全局样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-weight: 400;
+            line-height: 1.4;
+            color: #171a20;
+            background-color: #ffffff;
+        }
+
+        /* 粒子背景容器 */
+        #particle-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* 半透明蒙版（特斯拉极简风格） */
+        #overlay-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(255, 255, 255, 0.75);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* 导航栏样式 */
+        .navbar {
+            background-color: transparent;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: background-color 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background-color: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #171a20;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .nav-menu li a {
+            color: #171a20;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-menu li a:hover {
+            color: #000000;
+        }
+
+        .btn-login {
+            background-color: transparent;
+            border: 2px solid #171a20;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .btn-login:hover {
+            background-color: #171a20;
+            color: #ffffff;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mobile-menu-btn span {
+            width: 24px;
+            height: 2px;
+            background-color: #171a20;
+        }
+
+        /* Hero 区域 */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 40px;
+        }
+
+        .hero-title {
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #171a20;
+        }
+
+        .hero-subtitle {
+            font-size: 20px;
+            color: #5c5e62;
+            margin-bottom: 40px;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 32px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #171a20;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #000000;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid #171a20;
+            color: #171a20;
+        }
+
+        .btn-secondary:hover {
+            background-color: #171a20;
+            color: #ffffff;
+        }
+
+        /* 通用区块样式 */
+        section {
+            padding: 80px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 40px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 60px;
+            color: #171a20;
+        }
+
+        /* 产品卡片 */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .product-card {
+            text-align: center;
+            padding: 40px 20px;
+            border-radius: 8px;
+            background-color: #f7f7f7;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-icon {
+            margin-bottom: 20px;
+            color: #171a20;
+        }
+
+        .product-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #171a20;
+        }
+
+        .product-desc {
+            font-size: 16px;
+            color: #5c5e62;
+            line-height: 1.6;
+        }
+
+        /* 流程步骤 */
+        .process-flow {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .process-step {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #171a20;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 auto 20px;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #171a20;
+        }
+
+        .step-desc {
+            font-size: 14px;
+            color: #5c5e62;
+        }
+
+        .process-arrow {
+            font-size: 32px;
+            color: #5c5e62;
+            align-self: center;
+        }
+
+        /* 商业模式 */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .model-card {
+            padding: 30px;
+            background-color: #f7f7f7;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .model-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #171a20;
+        }
+
+        .model-desc {
+            font-size: 14px;
+            color: #5c5e62;
+            line-height: 1.6;
+        }
+
+        /* 合作伙伴 */
+        .clients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .client-logo {
+            font-size: 14px;
+            color: #5c5e62;
+            padding: 5px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #ffffff;
+            transition: border-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .client-logo:hover {
+            border-color: #171a20;
+        }
+
+        /* 联系我们 */
+        .contact {
+            text-align: center;
+            padding: 100px 40px;
+        }
+
+        .contact-title {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #171a20;
+        }
+
+        .contact-desc {
+            font-size: 18px;
+            color: #5c5e62;
+            margin-bottom: 40px;
+        }
+
+        .btn-large {
+            padding: 16px 40px;
+            font-size: 16px;
+        }
+
+        /* 页脚 */
+        .footer {
+            background-color: #f7f7f7;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #171a20;
+        }
+
+        .footer-text {
+            font-size: 12px;
+            color: #5c5e62;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .hero-title2 {
+                font-size: 24px;
+            }
+
+            .hero-subtitle {
+                font-size: 16px;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .section-title {
+                font-size: 28px;
+            }
+
+            .process-flow {
+                flex-direction: column;
+            }
+
+            .process-arrow {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 粒子背景 -->
+    <div id="particle-bg"></div>
+    <!-- 半透明蒙版 -->
+    <div id="overlay-mask"></div>
+
+    <!-- ============================================== -->
+    <!-- 👇 👇 👇 这下面 100% 是你原来的全部网站代码 👇 👇 👇 -->
+    <!-- ============================================== -->
+
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <span class="logo-text">博弈论 AI LAB</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#products">产品</a></li>
+                    <li><a href="#solutions">解决方案</a></li>
+                    <li><a href="#about">关于我们</a></li>
+                    <li><a href="#contact">联系</a></li>
+                    <li><a href="#login" class="btn-login">登录</a></li>
+                </ul>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Banner -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">让行业数据丰富 AI 基础计算</h1>
+                <h1 class="hero-title">以博致远 以弈致知</h1>
+                <h1 class="hero-title2">Think in Strategy</h1>
+                <p class="hero-subtitle">算电一体 · 多AI引擎 · 算力出海</p>
+                <div class="hero-cta">
+                    <a href="#contact" class="btn btn-primary">立即咨询</a>
+                    <a href="#products" class="btn btn-secondary">了解产品</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 三大产品卡片 -->
+    <section class="products" id="products">
+        <div class="container">
+            <h2 class="section-title">核心产品</h2>
+            <div class="products-grid">
+                <div class="product-card">
+                    <div class="product-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="product-title">算电一体</h3>
+                    <h3 class="product-title">Howmuch.ai</h3>
+                    <p class="product-desc">算力与电力深度融合，实现能源最优配置，大幅降低计算成本</p>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 13v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                            <path d="M12 17v5"></path>
+                            <path d="M8 21h8"></path>
+                        </svg>
+                    </div>
+                    <h3 class="product-title">多AI引擎</h3>
+                    <h3 class="product-title">Lumico Engine</h3>
+                    <p class="product-desc">基于行业数据丰富AI的智能决策系统，多智能体协同优化决策效率</p>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M2 12h20"></path>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="product-title">算力出海</h3>
+                    <h3 class="product-title">Howsuan.com</h3>
+                    <p class="product-desc">全球算力资源调度，跨境数据传输，服务企业全球化布局</p>
+                </div>
+
+                <div class="product-card">
+                    <div class="product-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4.5 10.5V8a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2.5"></path>
+                            <path d="M8 10V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"></path>
+                            <path d="M4.5 14.5a2.5 2.5 0 0 0 5 0a2.5 2.5 0 0 0 5 0a2.5 2.5 0 0 0 5 0"></path>
+                            <path d="M4.5 14.5v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"></path>
+                        </svg>
+                    </div>
+                    <h3 class="product-title">AI native金融</h3>
+                    <h3 class="product-title">Howfund.com</h3>
+                    <p class="product-desc">AI 原生基金等金融领域的核心范式</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 业务闭环流程图 -->
+    <section class="process" id="solutions">
+        <div class="container">
+            <h2 class="section-title">业务闭环流程</h2>
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h4 class="step-title">需求分析</h4>
+                    <p class="step-desc">深度理解业务场景与计算需求</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h4 class="step-title">策略设计</h4>
+                    <p class="step-desc">算法优化算力配置</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h4 class="step-title">系统部署</h4>
+                    <p class="step-desc">算电一体架构落地实施</p>
+                </div>
+                <div class="process-arrow">→</div>
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h4 class="step-title">持续优化</h4>
+                    <p class="step-desc">多AI引擎动态迭代升级</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 商业模式板块 -->
+    <section class="business-model" id="about">
+        <div class="container">
+            <h2 class="section-title">商业模式</h2>
+            <div class="model-grid">
+                <div class="model-card">
+                    <h3 class="model-title">按需付费</h3>
+                    <p class="model-desc">灵活的计费模式，按实际使用量结算</p>
+                </div>
+                <div class="model-card">
+                    <h3 class="model-title">长期合作</h3>
+                    <p class="model-desc">定制化解决方案，深度技术支持</p>
+                </div>
+                <div class="model-card">
+                    <h3 class="model-title">收益分成</h3>
+                    <p class="model-desc">与客户共享效率提升带来的价值</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 客户案例 LOGO 墙 -->
+    <section class="clients">
+        <div class="container">
+            <h2 class="section-title">合作伙伴</h2>
+            <div class="clients-grid">
+                <div class="client-logo">
+                    <img src="assets/deepseek.png" alt="Deepseek AI" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/kimi.png" alt="Kimi AI" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/step.png" alt="Step" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/ZPQY.png" alt="ZPQY AI" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/GDJT.png" alt="光大集团" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/CICC.png" alt="中金公司" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/CITIC.png" alt="中信集团" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/GTHT.png" alt="国泰海通" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/DJBX.png" alt="大家保险" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/Taikang.png" alt="泰康保险" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+                <div class="client-logo">
+                    <img src="assets/ZGTP.png" alt="太平保险" style="max-width: 100%; max-height: 60px; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 联系我们 -->
+    <section class="contact" id="contact">
+        <div class="container">
+            <div class="contact-content">
+                <h2 class="contact-title">准备好开始了吗？</h2>
+                <p class="contact-desc">让博弈论AI来驱动您的业务增长</p>
+                <a href="mailto:contact@boyilun.com" class="btn btn-primary btn-large">联系我们</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">博弈论AI</div>
+                <p class="footer-text">© 2026 博弈论AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+
+    <!-- ============================================== -->
+    <!-- 👆 👆 👆 你原来的代码结束 👆 👆 👆 -->
+    <!-- ============================================== -->
+
+    <!-- 粒子动画核心代码 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script>
+        let scene, camera, renderer;
+        let particles;
+        const particleCount = 3000;
+
+        let shapes = [];
+        let currentShape = 0;
+        let nextShape = 1;
+        let morphT = 0;
+        const morphSpeed = 0.008;
+        const holdTime = 100;
+        let holdCounter = 0;
+
+        let positions, baseTargets;
+        const mouse = new THREE.Vector2();
+        const mouseTarget = new THREE.Vector3(999,999,999);
+        const mouseStrength = -0.12;
+        const mouseRadius = 2.0;
+        let mouseMoved = false;
+
+        init();
+        animate();
+
+        function init() {
+            const container = document.getElementById('particle-bg');
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.z = 14;
+
+            renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+
+            positions = new Float32Array(particleCount * 3);
+            baseTargets = new Float32Array(particleCount * 3);
+
+            shapes.push(generateBoxPoints(3.5));
+            shapes.push(generateSpherePoints(12));
+            shapes.push(generateWavePoints(15, 0.5, 1.5));
+
+            for(let i=0;i<positions.length;i++) positions[i] = shapes[0][i];
+
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const mat = new THREE.PointsMaterial({
+                color: 0x171a20,
+                size: 0.08,
+                transparent: true,
+                opacity: 0.4,
+                blending: THREE.NormalBlending,
+                depthWrite: false
+            });
+            
+            particles = new THREE.Points(geom, mat);
+            scene.add(particles);
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('resize', onResize);
+        }
+
+        function onMouseMove(e){
+            mouseMoved = true;
+            mouse.x = (e.clientX / window.innerWidth) - 0.5;
+            mouse.y = (e.clientY / window.innerHeight) - 0.5;
+            mouseTarget.x = mouse.x * 14;
+            mouseTarget.y = -mouse.y * 14;
+            mouseTarget.z = 0;
+        }
+
+        function generateBoxPoints(scale){
+            const a = new Float32Array(particleCount*3);
+            for(let i=0;i<particleCount;i++){
+                const i3=i*3;
+                a[i3]=(Math.random()-0.5)*scale;
+                a[i3+1]=(Math.random()-0.5)*scale;
+                a[i3+2]=(Math.random()-0.5)*scale;
+            }
+            return a;
+        }
+        function generateSpherePoints(scale){
+            const a=new Float32Array(particleCount*3);
+            for(let i=0;i<particleCount;i++){
+                const i3=i*3;
+                const t=Math.random()*Math.PI*2;
+                const p=Math.acos(2*Math.random()-1);
+                const r=scale*Math.cbrt(Math.random());
+                a[i3]=r*Math.sin(p)*Math.cos(t);
+                a[i3+1]=r*Math.sin(p)*Math.sin(t);
+                a[i3+2]=r*Math.cos(p);
+            }
+            return a;
+        }
+        function generateWavePoints(s,fq,amp){
+            const a=new Float32Array(particleCount*3);
+            for(let i=0;i<particleCount;i++){
+                const i3=i*3;
+                const x=(Math.random()-0.5)*s;
+                const z=(Math.random()-0.5)*s;
+                const y=Math.sin(x*fq)*Math.cos(z*fq)*amp;
+                a[i3]=x; a[i3+1]=y; a[i3+2]=z;
+            }
+            return a;
+        }
+
+        function animate(){
+            requestAnimationFrame(animate);
+            if(morphT<1){
+                morphT+=morphSpeed;
+            }else{
+                holdCounter++;
+                if(holdCounter>=holdTime){
+                    holdCounter=0; morphT=0;
+                    currentShape=(currentShape+1)%shapes.length;
+                    nextShape=(currentShape+1)%shapes.length;
+                }
+            }
+            const t=THREE.MathUtils.smoothstep(morphT,0,1);
+            const sa=shapes[currentShape], sb=shapes[nextShape];
+            for(let i=0;i<baseTargets.length;i++) baseTargets[i]=THREE.MathUtils.lerp(sa[i],sb[i],t);
+
+            for(let i=0;i<particleCount;i++){
+                const i3=i*3;
+                const px=positions[i3],py=positions[i3+1],pz=positions[i3+2];
+                const dx=mouseTarget.x-px, dy=mouseTarget.y-py, dz=mouseTarget.z-pz;
+                const d=Math.hypot(dx,dy,dz);
+
+                if(mouseMoved && d < mouseRadius){
+                    const pow=(1-d/mouseRadius)*mouseStrength;
+                    positions[i3]+=dx*pow;
+                    positions[i3+1]+=dy*pow;
+                    positions[i3+2]+=dz*pow;
+                }else{
+                    const sp=0.05;
+                    positions[i3]+=(baseTargets[i3]-px)*sp;
+                    positions[i3+1]+=(baseTargets[i3+1]-py)*sp;
+                    positions[i3+2]+=(baseTargets[i3+2]-pz)*sp;
+                }
+            }
+            particles.geometry.attributes.position.needsUpdate=true;
+            particles.rotation.y+=0.002;
+            renderer.render(scene,camera);
+        }
+        function onResize(){
+            camera.aspect=window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth,window.innerHeight);
+        }
+    </script>
+</body>
+</html>
